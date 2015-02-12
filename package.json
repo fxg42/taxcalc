@@ -1,0 +1,16 @@
+{
+  "name": "taxcalc",
+  "version": "1.0.0",
+  "description": "A function that calculates taxes on line items",
+  "main": "lib/index.js",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bigdecimal": "^0.6.1",
+    "immutable": "^3.6.2"
+  },
+  "devDependencies": {
+    "6to5": "^3.6.0",
+    "jasmine": "^2.2.1"
+  }
+}
