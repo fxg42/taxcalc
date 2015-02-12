@@ -5,17 +5,17 @@ import Immutable from 'immutable'
 export default function (items, salesTaxConfigs) {
 
   let taxAmountTotals = Immutable.Map()
-  for (let each of salesTaxConfigs) {
-    taxAmountTotals = taxAmountTotals.set(each.id, ZERO)
-  }
+  salesTaxConfigs.forEach(function(tax) {
+    taxAmountTotals = taxAmountTotals.set(tax.id, ZERO)
+  })
 
   let salesTotalWithoutTaxes = ZERO
-  for (let item of items) {
+  items.forEach(function(item) {
     let itemTotalWithoutTaxes = new Money(new BigDecimal(item.unit).multiply(new BigDecimal(item.qty)))
     salesTotalWithoutTaxes = salesTotalWithoutTaxes.add(itemTotalWithoutTaxes)
 
     let itemTotalWithTaxes = itemTotalWithoutTaxes
-    for (let tax of salesTaxConfigs) {
+    salesTaxConfigs.forEach(function(tax) {
       if (item.isTaxable[tax.id]) {
         let rate = new BigDecimal(tax.rate)
         let taxAmount = ZERO
@@ -27,8 +27,8 @@ export default function (items, salesTaxConfigs) {
         itemTotalWithTaxes = itemTotalWithTaxes.add(taxAmount)
         taxAmountTotals = taxAmountTotals.set(tax.id, (taxAmountTotals.get(tax.id).add(taxAmount)))
       }
-    }
-  }
+    })
+  })
 
   let salesTotalWithTaxes = taxAmountTotals.reduce(
     ( (acc, taxTotalAmount) => acc.add(taxTotalAmount) ),
