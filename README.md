@@ -60,3 +60,7 @@ const TAX_CONFIGS_SCHEMA = {
   }
 }
 ```
+
+## License
+
+MIT.
