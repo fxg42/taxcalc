@@ -2,41 +2,32 @@ import {Money, ZERO} from './money'
 import {BigDecimal} from 'bigdecimal'
 import Immutable from 'immutable'
 
-export default function (items, salesTaxConfigs) {
+export default function (items, taxConfigs) {
 
-  let taxAmountTotals = Immutable.Map()
-  salesTaxConfigs.forEach(function(tax) {
-    taxAmountTotals = taxAmountTotals.set(tax.id, ZERO)
+  const taxConfigs = Immutable.List(taxConfigs)
+
+  let taxTotals = taxConfigs.reduce((acc, tax) => acc.set(tax.id, ZERO), Immutable.Map())
+  let salesSubtotal = ZERO
+
+  items.forEach( item => {
+    let itemSubtotal = new Money(new BigDecimal(item.unit).multiply(new BigDecimal(item.qty)))
+    salesSubtotal = salesSubtotal.add(itemSubtotal)
+
+    taxConfigs
+      .filter(tax => item.isTaxable[tax.id])
+      .reduce((runningTotal, taxConfig) => {
+        const taxRate = new BigDecimal(taxConfig.rate)
+        const taxTotal = taxConfig.isComposed ? runningTotal.multiply(taxRate) : itemSubtotal.multiply(taxRate)
+        taxTotals = taxTotals.set(taxConfig.id, (taxTotals.get(taxConfig.id).add(taxTotal)))
+        return runningTotal.add(taxTotal)
+      }, itemSubtotal)
   })
 
-  let salesTotalWithoutTaxes = ZERO
-  items.forEach(function(item) {
-    let itemTotalWithoutTaxes = new Money(new BigDecimal(item.unit).multiply(new BigDecimal(item.qty)))
-    salesTotalWithoutTaxes = salesTotalWithoutTaxes.add(itemTotalWithoutTaxes)
-
-    let itemTotalWithTaxes = itemTotalWithoutTaxes
-    salesTaxConfigs.forEach(function(tax) {
-      if (item.isTaxable[tax.id]) {
-        let rate = new BigDecimal(tax.rate)
-        let taxAmount = ZERO
-        if (tax.isComposed) {
-          taxAmount = itemTotalWithTaxes.multiply(rate)
-        } else {
-          taxAmount = itemTotalWithoutTaxes.multiply(rate)
-        }
-        itemTotalWithTaxes = itemTotalWithTaxes.add(taxAmount)
-        taxAmountTotals = taxAmountTotals.set(tax.id, (taxAmountTotals.get(tax.id).add(taxAmount)))
-      }
-    })
-  })
-
-  let salesTotalWithTaxes = taxAmountTotals.reduce(
-    ( (acc, taxTotalAmount) => acc.add(taxTotalAmount) ),
-      salesTotalWithoutTaxes)
+  const total = taxTotals.reduce((acc, taxTotalAmount) => acc.add(taxTotalAmount), salesSubtotal)
 
   return {
-    subtotal: salesTotalWithoutTaxes.toFloat(),
-    total: salesTotalWithTaxes.toFloat(),
-    taxes: taxAmountTotals.map( amount => amount.toFloat() ).toJS()
+    subtotal: salesSubtotal.toFloat(),
+    taxes: taxTotals.map( amount => amount.toFloat() ).toJS(),
+    total: total.toFloat()
   }
 }

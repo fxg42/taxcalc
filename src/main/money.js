@@ -2,11 +2,8 @@ import {BigDecimal, RoundingMode} from 'bigdecimal'
 
 export class Money {
   
-  constructor(_amount) {
-    let amount = _amount
-    if (! (amount instanceof BigDecimal)) {
-      amount = new BigDecimal(amount)
-    }
+  constructor(amount) {
+    if (! (amount instanceof BigDecimal)) amount = new BigDecimal(amount)
     this.amount = amount
   }
 
