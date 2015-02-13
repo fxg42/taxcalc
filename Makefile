@@ -11,7 +11,6 @@ lib/%.js: src/main/%.js
 
 spec: $(SPEC)
 spec/%.js: src/spec/%.js
-	mkdir -p $(@D)
 	./node_modules/.bin/6to5 $< -o $@
 
 test:
