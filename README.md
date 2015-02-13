@@ -23,7 +23,7 @@ calc(items, taxConfigs)
 
 Inputs must conform with the following schemas. If not, `calc` returns null.
 
-```
+```javascript
 const ITEMS_SCHEMA = {
   type: 'array',
   required: true,
