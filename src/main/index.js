@@ -44,20 +44,26 @@ function isValid(candidate, schema) {
   return validator.errors.length === 0
 }
 
+function haveValidReferences(items, taxConfigs) {
+  const possible = taxConfigs.map(taxConfig => taxConfig.get('id')).toSet()
+  const actual = items.flatMap(item => item.get('isTaxable').keys()).toSet()
+  return actual.isSubset(possible)
+}
+
 function calculateTaxes(items, taxConfigs) {
-  let taxTotals = taxConfigs.reduce((acc, tax) => acc.set(tax.id, ZERO), Immutable.Map())
+  let taxTotals = taxConfigs.reduce((acc, tax) => acc.set(tax.get('id'), ZERO), Immutable.Map())
   let salesSubtotal = ZERO
 
   items.forEach( item => {
-    let itemSubtotal = new Money(new BigDecimal(item.unit).multiply(new BigDecimal(item.qty)))
+    let itemSubtotal = new Money(new BigDecimal(item.get('unit')).multiply(new BigDecimal(item.get('qty'))))
     salesSubtotal = salesSubtotal.add(itemSubtotal)
 
     taxConfigs
-      .filter(tax => item.isTaxable[tax.id])
+      .filter(tax => item.get('isTaxable').get(tax.get('id')))
       .reduce((runningTotal, taxConfig) => {
-        const taxRate = new BigDecimal(taxConfig.rate)
-        const taxTotal = taxConfig.isComposed ? runningTotal.multiply(taxRate) : itemSubtotal.multiply(taxRate)
-        taxTotals = taxTotals.set(taxConfig.id, (taxTotals.get(taxConfig.id).add(taxTotal)))
+        const taxRate = new BigDecimal(taxConfig.get('rate'))
+        const taxTotal = taxConfig.get('isComposed') ? runningTotal.multiply(taxRate) : itemSubtotal.multiply(taxRate)
+        taxTotals = taxTotals.set(taxConfig.get('id'), (taxTotals.get(taxConfig.get('id')).add(taxTotal)))
         return runningTotal.add(taxTotal)
       }, itemSubtotal)
   })
@@ -72,8 +78,11 @@ function calculateTaxes(items, taxConfigs) {
 }
 
 export default function (items, taxConfigs) {
-  if (isValid(items, ITEMS_SCHEMA) && isValid(taxConfigs, TAX_CONFIGS_SCHEMA)) {
-    return calculateTaxes(Immutable.List(items), Immutable.List(taxConfigs))
+  let items = Immutable.fromJS(items)
+  let taxConfigs = Immutable.fromJS(taxConfigs)
+
+  if (isValid(items.toJS(), ITEMS_SCHEMA) && isValid(taxConfigs.toJS(), TAX_CONFIGS_SCHEMA)) {
+    return haveValidReferences(items, taxConfigs) ? calculateTaxes(items, taxConfigs) : null
   } else {
     return null
   }
