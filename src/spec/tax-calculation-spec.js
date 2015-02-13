@@ -149,6 +149,20 @@ describe('Tax calculations', () => {
     expect(result).toBe(null)
   })
 
+  it('fails if items contain tax ids which arent in taxConfigs', () => {
+    const taxConfig = [
+      {id:'tax1', rate:"0.05", isComposed:false},
+      {id:'tax2', rate:0.095, isComposed:true}
+    ]
+    const items = [
+      {unit:100, qty:1, isTaxable: {tax1: true, tax2: true, tax3: true}},
+    ]
+
+    const result = calc(items, taxConfig)
+    
+    expect(result).toBe(null)
+  })
+
   it('calculates when there are no items', () => {
     const taxConfig = [
       {id:'tax1', rate:0.05, isComposed:false},
