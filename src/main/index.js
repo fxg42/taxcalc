@@ -50,6 +50,12 @@ function haveValidReferences(items, taxConfigs) {
   return actual.isSubset(possible)
 }
 
+function areValid(items, taxConfigs) {
+  return isValid(items.toJS(), ITEMS_SCHEMA) &&
+         isValid(taxConfigs.toJS(), TAX_CONFIGS_SCHEMA) &&
+         haveValidReferences(items, taxConfigs)
+}
+
 function calculateTaxes(items, taxConfigs) {
   let taxTotals = taxConfigs.reduce((acc, tax) => acc.set(tax.get('id'), ZERO), Immutable.Map())
   let salesSubtotal = ZERO
@@ -59,7 +65,7 @@ function calculateTaxes(items, taxConfigs) {
     salesSubtotal = salesSubtotal.add(itemSubtotal)
 
     taxConfigs
-      .filter(tax => item.get('isTaxable').get(tax.get('id')))
+      .filter(taxConfig => item.get('isTaxable').get(taxConfig.get('id')))
       .reduce((runningTotal, taxConfig) => {
         const taxRate = new BigDecimal(taxConfig.get('rate'))
         const taxTotal = taxConfig.get('isComposed') ? runningTotal.multiply(taxRate) : itemSubtotal.multiply(taxRate)
@@ -81,9 +87,5 @@ export default function (items, taxConfigs) {
   let items = Immutable.fromJS(items)
   let taxConfigs = Immutable.fromJS(taxConfigs)
 
-  if (isValid(items.toJS(), ITEMS_SCHEMA) && isValid(taxConfigs.toJS(), TAX_CONFIGS_SCHEMA)) {
-    return haveValidReferences(items, taxConfigs) ? calculateTaxes(items, taxConfigs) : null
-  } else {
-    return null
-  }
+  return areValid(items, taxConfigs) ? calculateTaxes(items, taxConfigs) : null
 }

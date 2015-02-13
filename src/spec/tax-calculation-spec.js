@@ -149,5 +149,44 @@ describe('Tax calculations', () => {
     expect(result).toBe(null)
   })
 
+  it('calculates when there are no items', () => {
+    const taxConfig = [
+      {id:'tax1', rate:0.05, isComposed:false},
+      {id:'tax2', rate:0.095, isComposed:true}
+    ]
+    const items = []
+
+    const result = calc(items, taxConfig)
+    
+    expect(result.subtotal).toBe(0)
+    expect(result.total).toBe(0)
+    expect(result.taxes.tax1).toBe(0)
+    expect(result.taxes.tax2).toBe(0)
+  })
+
+  it('calculates when there are no taxes', () => {
+    const taxConfig = []
+    const items = [
+      {unit:100, qty:1, isTaxable: {}},
+    ]
+
+    const result = calc(items, taxConfig)
+    
+    expect(result.subtotal).toBe(100)
+    expect(result.total).toBe(100)
+    expect(result.taxes).toEqual({})
+  })
+
+  it('calculates when there are no taxes and no items', () => {
+    const taxConfig = []
+    const items = []
+
+    const result = calc(items, taxConfig)
+    
+    expect(result.subtotal).toBe(0)
+    expect(result.total).toBe(0)
+    expect(result.taxes).toEqual({})
+  })
+
 })
 

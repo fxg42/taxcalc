@@ -21,7 +21,8 @@ calc(items, taxConfigs)
 // => { subtotal:200, total:229.95, taxes: { tax1:10, tax2:19.95 } }
 ```
 
-Inputs must conform with the following schemas. If not, `calc` returns null.
+Inputs must conform with the following schemas and `isTaxable` keys
+must be ids found in `taxConfigs`. Otherwise, `calc` returns `null`.
 
 ```javascript
 const ITEMS_SCHEMA = {
