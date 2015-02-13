@@ -57,11 +57,13 @@ function areValid(items, taxConfigs) {
 }
 
 function calculateTaxes(items, taxConfigs) {
-  const [total, subtotal, taxTotals] = items
+  const [total, subtotal, taxTotals] =
+    items
     .reduce(([ runningTotal, runningSubtotal, runningTaxTotals ], item) => {
       const itemSubtotal = new Money(new BigDecimal(item.get('unit')).multiply(new BigDecimal(item.get('qty'))))
 
-      const itemTotal = taxConfigs
+      const itemTotal =
+        taxConfigs
         .filter(taxConfig => item.get('isTaxable').get(taxConfig.get('id')))
         .reduce((runningItemTotal, taxConfig) => {
           const taxRate = new BigDecimal(taxConfig.get('rate'))
@@ -71,7 +73,11 @@ function calculateTaxes(items, taxConfigs) {
         }, itemSubtotal)
 
       return [ runningTotal.add(itemTotal), runningSubtotal.add(itemSubtotal), runningTaxTotals ]
-    }, [ ZERO, ZERO, (taxConfigs.reduce((acc, tax) => acc.set(tax.get('id'), ZERO), Immutable.Map()))])
+    }, [
+      ZERO,
+      ZERO,
+      (taxConfigs.reduce((acc, tax) => acc.set(tax.get('id'), ZERO), Immutable.Map()))
+    ])
 
   return {
     subtotal: subtotal.toFloat(),
