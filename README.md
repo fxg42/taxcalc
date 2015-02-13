@@ -2,6 +2,10 @@
 
 A simple line item tax calculator.
 
+```
+npm install taxcalc
+```
+
 ## Usage
 
 ```javascript
