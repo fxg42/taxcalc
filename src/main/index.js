@@ -58,34 +58,33 @@ function areValid(items, taxConfigs) {
 
 function calculateTaxes(items, taxConfigs) {
   let taxTotals = taxConfigs.reduce((acc, tax) => acc.set(tax.get('id'), ZERO), Immutable.Map())
-  let salesSubtotal = ZERO
 
-  items.forEach( item => {
-    let itemSubtotal = new Money(new BigDecimal(item.get('unit')).multiply(new BigDecimal(item.get('qty'))))
-    salesSubtotal = salesSubtotal.add(itemSubtotal)
+  const subtotal = items.reduce((runningSubtotal, item) => {
+    const itemSubtotal = new Money(new BigDecimal(item.get('unit')).multiply(new BigDecimal(item.get('qty'))))
 
     taxConfigs
       .filter(taxConfig => item.get('isTaxable').get(taxConfig.get('id')))
-      .reduce((runningTotal, taxConfig) => {
+      .reduce((runningItemTotal, taxConfig) => {
         const taxRate = new BigDecimal(taxConfig.get('rate'))
-        const taxTotal = taxConfig.get('isComposed') ? runningTotal.multiply(taxRate) : itemSubtotal.multiply(taxRate)
+        const taxTotal = taxConfig.get('isComposed') ? runningItemTotal.multiply(taxRate) : itemSubtotal.multiply(taxRate)
         taxTotals = taxTotals.set(taxConfig.get('id'), (taxTotals.get(taxConfig.get('id')).add(taxTotal)))
-        return runningTotal.add(taxTotal)
+        return runningItemTotal.add(taxTotal)
       }, itemSubtotal)
-  })
 
-  const total = taxTotals.reduce((acc, taxTotalAmount) => acc.add(taxTotalAmount), salesSubtotal)
+    return runningSubtotal.add(itemSubtotal)
+  }, ZERO)
+
+  const total = taxTotals.reduce((acc, taxTotal) => acc.add(taxTotal), subtotal)
 
   return {
-    subtotal: salesSubtotal.toFloat(),
-    taxes: taxTotals.map( amount => amount.toFloat() ).toJS(),
+    subtotal: subtotal.toFloat(),
+    taxes: taxTotals.map(taxTotal => taxTotal.toFloat()).toJS(),
     total: total.toFloat()
   }
 }
 
 export default function (items, taxConfigs) {
-  let items = Immutable.fromJS(items)
-  let taxConfigs = Immutable.fromJS(taxConfigs)
-
+  const items = Immutable.fromJS(items)
+  const taxConfigs = Immutable.fromJS(taxConfigs)
   return areValid(items, taxConfigs) ? calculateTaxes(items, taxConfigs) : null
 }
