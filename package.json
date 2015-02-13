@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "A function that calculates taxes on line items",
   "main": "lib/index.js",
-  "author": "",
+  "author": "François-Xavier Guillemette <francois.x.guillemette@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fxg42/taxcalc"
+  },
   "dependencies": {
     "bigdecimal": "^0.6.1",
     "immutable": "^3.6.2",
