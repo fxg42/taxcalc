@@ -1,6 +1,6 @@
 {
   "name": "taxcalc",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A function that calculates taxes on line items",
   "main": "lib/index.js",
   "author": "François-Xavier Guillemette <francois.x.guillemette@gmail.com>",
