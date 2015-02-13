@@ -59,22 +59,21 @@ function areValid(items, taxConfigs) {
 function calculateTaxes(items, taxConfigs) {
   let taxTotals = taxConfigs.reduce((acc, tax) => acc.set(tax.get('id'), ZERO), Immutable.Map())
 
-  const subtotal = items.reduce((runningSubtotal, item) => {
-    const itemSubtotal = new Money(new BigDecimal(item.get('unit')).multiply(new BigDecimal(item.get('qty'))))
+  const [total, subtotal] = items
+    .reduce(([ runningTotal, runningSubtotal ], item) => {
+      const itemSubtotal = new Money(new BigDecimal(item.get('unit')).multiply(new BigDecimal(item.get('qty'))))
 
-    taxConfigs
-      .filter(taxConfig => item.get('isTaxable').get(taxConfig.get('id')))
-      .reduce((runningItemTotal, taxConfig) => {
-        const taxRate = new BigDecimal(taxConfig.get('rate'))
-        const taxTotal = taxConfig.get('isComposed') ? runningItemTotal.multiply(taxRate) : itemSubtotal.multiply(taxRate)
-        taxTotals = taxTotals.set(taxConfig.get('id'), (taxTotals.get(taxConfig.get('id')).add(taxTotal)))
-        return runningItemTotal.add(taxTotal)
-      }, itemSubtotal)
+      const itemTotal = taxConfigs
+        .filter(taxConfig => item.get('isTaxable').get(taxConfig.get('id')))
+        .reduce((runningItemTotal, taxConfig) => {
+          const taxRate = new BigDecimal(taxConfig.get('rate'))
+          const taxTotal = taxConfig.get('isComposed') ? runningItemTotal.multiply(taxRate) : itemSubtotal.multiply(taxRate)
+          taxTotals = taxTotals.set(taxConfig.get('id'), (taxTotals.get(taxConfig.get('id')).add(taxTotal)))
+          return runningItemTotal.add(taxTotal)
+        }, itemSubtotal)
 
-    return runningSubtotal.add(itemSubtotal)
-  }, ZERO)
-
-  const total = taxTotals.reduce((acc, taxTotal) => acc.add(taxTotal), subtotal)
+      return [ runningTotal.add(itemTotal), runningSubtotal.add(itemSubtotal) ]
+    }, [ ZERO, ZERO ])
 
   return {
     subtotal: subtotal.toFloat(),
